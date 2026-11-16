@@ -78,7 +78,7 @@ def hitung_harga_satuan(jumlah, total, nama=("x", "y", "z")) -> HasilHarga:
 
     try:
         X = selesaikan_spl(jumlah, total)
-    except np.linalg.LinAlgError:
+    except (np.linalg.LinAlgError, AssertionError):  # AssertionError: verifikasi solver gagal karena hampir singular
         raise TidakAdaSolusiUnik(
             "Struk kurang bervariasi: ada struk yang perbandingan jumlahnya sama dengan struk lain. "
             "Tambah struk dengan kombinasi berbeda."

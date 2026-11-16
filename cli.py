@@ -1,4 +1,6 @@
 """Antarmuka terminal: python cli.py"""
+import math
+import re
 import sys
 
 from harga_satuan import InputTidakValid, TidakAdaSolusiUnik, format_rupiah, hitung_harga_satuan
@@ -8,12 +10,17 @@ def baca_angka(teks: str, mode: str) -> float:
     """mode 'jumlah': koma = desimal, >= 0. mode 'total': titik = ribuan, > 0."""
     t = teks.strip()
     if mode == "total":
-        t = t.removeprefix("Rp").removeprefix("rp").replace(" ", "").replace(".", "")
+        t = t.removeprefix("Rp").removeprefix("rp").replace(" ", "")
+        if re.search(r",\d{3}$", t):
+            raise ValueError(f"'{teks}' memakai koma sebagai ribuan; tulis 55.000 atau 55000.")
+        t = t.replace(".", "")
     t = t.replace(",", ".")
     try:
         n = float(t)
     except ValueError:
         raise ValueError(f"'{teks}' bukan angka.") from None
+    if not math.isfinite(n):
+        raise ValueError(f"'{teks}' bukan angka.")
     if mode == "jumlah" and n < 0:
         raise ValueError("Jumlah tidak boleh negatif.")
     if mode == "total" and n <= 0:

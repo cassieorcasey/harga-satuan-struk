@@ -108,3 +108,8 @@ def test_galat_float_tidak_memicu_peringatan():
     total = [0.1 * 20000 + 0.2 * 5000 + 0.3 * 10000, 65000, 85000]
     h = hitung_harga_satuan(jumlah, total, NAMA)
     assert h.peringatan == []
+
+
+def test_hampir_singular_tidak_crash():
+    with pytest.raises(TidakAdaSolusiUnik):
+        hitung_harga_satuan([[1, 1, 1], [2, 2, 2.000000000001], [1, 2, 3]], [55000, 60000, 85000], NAMA)

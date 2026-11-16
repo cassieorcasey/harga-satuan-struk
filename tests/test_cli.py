@@ -60,3 +60,9 @@ def test_struk_identik_pesan_bukan_traceback():
                           "2", "1", "1", "55.000",
                           "3", "1", "2", "85.000"])
     assert kode == 1 and "kurang bervariasi" in out
+
+
+@pytest.mark.parametrize("t, m", [("55,000", "total"), ("Rp 1,250,000", "total"), ("nan", "jumlah"), ("inf", "total")])
+def test_baca_angka_tolak_format_inggris_dan_bukan_angka(t, m):
+    with pytest.raises(ValueError):
+        baca_angka(t, m)
