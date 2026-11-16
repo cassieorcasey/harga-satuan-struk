@@ -1,10 +1,10 @@
 # Pencari Harga Satuan dari Struk (SPLTV) / Receipt Unit Price Finder
 
-[Bahasa Indonesia](#bahasa-indonesia) | [English](#english)
+[id](#id) | [en](#en)
 
 ---
 
-## Bahasa Indonesia
+## id
 
 Menghitung harga satuan 3 barang dari 3 struk belanja yang berisi barang sama dengan jumlah berbeda.
 
@@ -83,7 +83,7 @@ pytest -q
 
 ---
 
-## English
+## en
 
 Finds the unit prices of 3 items from 3 receipts that contain the same items in different quantities.
 
