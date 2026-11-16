@@ -118,7 +118,7 @@ python cli.py
 
 The CLI is in Indonesian. Totals use Indonesian notation: `55000`, `55.000`, or `Rp 55.000` (a period separates thousands). Quantities may be decimal, written with a comma (`0,5`).
 
-From code (same example as above, with English item names):
+From code:
 
 ```python
 from harga_satuan import format_rupiah, hitung_harga_satuan
