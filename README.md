@@ -1,5 +1,7 @@
 # Pencari Harga Satuan dari Struk (SPLTV)
 
+**Bahasa Indonesia** | [English](README.en.md)
+
 Menghitung harga satuan 3 barang dari 3 struk belanja yang berisi barang sama dengan jumlah berbeda.
 
 ## Model
