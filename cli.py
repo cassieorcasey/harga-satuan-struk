@@ -10,15 +10,14 @@ def baca_angka(teks: str, mode: str) -> float:
     """mode 'jumlah': koma = desimal, >= 0. mode 'total': titik = ribuan, > 0."""
     t = teks.strip()
     if mode == "total":
-        t = t.removeprefix("Rp").removeprefix("rp").replace(" ", "")
+        t = t.lower().removeprefix("rp").replace(" ", "")
         if re.search(r",\d{3}$", t):
-            raise ValueError(f"'{teks}' memakai koma sebagai ribuan; tulis 55.000 atau 55000.")
+            raise ValueError(f"'{teks}' memakai koma sebagai ribuan, tulis 55.000 atau 55000.")
         t = t.replace(".", "")
-    t = t.replace(",", ".")
     try:
-        n = float(t)
+        n = float(t.replace(",", "."))
     except ValueError:
-        raise ValueError(f"'{teks}' bukan angka.") from None
+        n = math.nan
     if not math.isfinite(n):
         raise ValueError(f"'{teks}' bukan angka.")
     if mode == "jumlah" and n < 0:
@@ -28,15 +27,14 @@ def baca_angka(teks: str, mode: str) -> float:
     return n
 
 
-def _tanya_angka(prompt, mode, input_fn, print_fn) -> float:
-    while True:
-        try:
-            return baca_angka(input_fn(prompt), mode)
-        except ValueError as e:
-            print_fn(f"  {e} Coba lagi.")
-
-
 def main(input_fn=input, print_fn=print) -> int:
+    def tanya(prompt, mode):
+        while True:
+            try:
+                return baca_angka(input_fn(prompt), mode)
+            except ValueError as e:
+                print_fn(f"  {e} Coba lagi.")
+
     print_fn("Pencari Harga Satuan dari Struk\n")
     nama = []
     for i in range(1, 4):
@@ -50,8 +48,8 @@ def main(input_fn=input, print_fn=print) -> int:
     jumlah, total = [], []
     for s in range(1, 4):
         print_fn(f"\nStruk {s}")
-        jumlah.append([_tanya_angka(f"  Jumlah {n}: ", "jumlah", input_fn, print_fn) for n in nama])
-        total.append(_tanya_angka("  Total (Rp): ", "total", input_fn, print_fn))
+        jumlah.append([tanya(f"  Jumlah {n}: ", "jumlah") for n in nama])
+        total.append(tanya("  Total (Rp): ", "total"))
 
     try:
         hasil = hitung_harga_satuan(jumlah, total, nama)
@@ -63,8 +61,8 @@ def main(input_fn=input, print_fn=print) -> int:
     for n, h in hasil.harga.items():
         print_fn(f"  {n}: {format_rupiah(h)}")
     print_fn("\nVerifikasi (hitung ulang vs struk):")
-    for s, (t_hitung, t_struk) in enumerate(zip(hasil.total_hitung_ulang, total), start=1):
-        print_fn(f"  Struk {s}: {format_rupiah(t_hitung)} vs {format_rupiah(t_struk)}")
+    for s, (hitung, struk) in enumerate(zip(hasil.total_hitung_ulang, total), start=1):
+        print_fn(f"  Struk {s}: {format_rupiah(hitung)} vs {format_rupiah(struk)}")
     for p in hasil.peringatan:
         print_fn(f"\nPeringatan: {p}")
     return 0
