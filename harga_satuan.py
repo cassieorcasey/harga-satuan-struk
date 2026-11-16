@@ -8,12 +8,10 @@ import numpy as np
 from linear_solver import selesaikan_spl
 
 
-class InputTidakValid(ValueError):
-    pass
+class InputTidakValid(ValueError): ...
 
 
-class TidakAdaSolusiUnik(ValueError):
-    pass
+class TidakAdaSolusiUnik(ValueError): ...
 
 
 @dataclass
@@ -24,7 +22,7 @@ class HasilHarga:
 
 
 def format_rupiah(nilai: float) -> str:
-    """20000.0 -> 'Rp20.000'; dibulatkan ke rupiah terdekat."""
+    """20000.4 -> 'Rp20.000'"""
     n = round(nilai)
     tanda = "-" if n < 0 else ""
     return f"{tanda}Rp{abs(n):,}".replace(",", ".")
@@ -34,14 +32,11 @@ def _buat_peringatan(harga: dict[str, float]) -> list[str]:
     peringatan = []
     for n, h in harga.items():
         if h < 0:
-            peringatan.append(f"Harga {n} negatif ({format_rupiah(h)}): tidak masuk akal, periksa salah ketik.")
+            peringatan.append(f"Harga {n} negatif ({format_rupiah(h)}): periksa salah ketik.")
         elif h < 100:
             peringatan.append(f"Harga {n} sangat kecil ({format_rupiah(h)}): periksa lagi datanya.")
     if any(abs(h - round(h / 100) * 100) > 0.5 for h in harga.values()):
-        peringatan.append(
-            "Ada harga yang bukan kelipatan Rp100: mungkin ada diskon atau pajak "
-            "yang belum dimasukkan, jadi hasil bisa terdistorsi."
-        )
+        peringatan.append("Ada harga bukan kelipatan Rp100, mungkin ada diskon atau pajak yang tidak dimasukkan.")
     return peringatan
 
 
@@ -67,23 +62,19 @@ def _validasi(jumlah, total, nama) -> None:
 
 
 def hitung_harga_satuan(jumlah, total, nama=("x", "y", "z")) -> HasilHarga:
-    """Hitung harga satuan dari jumlah (3x3, baris = struk) dan total (3 angka)."""
+    """jumlah: 3x3, satu baris per struk. total: 3 angka."""
     _validasi(jumlah, total, nama)
+    A = np.asarray(jumlah, dtype=float)
 
-    for j, n in enumerate(nama):
-        if all(baris[j] == 0 for baris in jumlah):
-            raise TidakAdaSolusiUnik(
-                f"{n} tidak muncul di struk mana pun, jadi harganya tidak bisa dihitung."
-            )
+    for n, muncul in zip(nama, A.any(axis=0)):
+        if not muncul:
+            raise TidakAdaSolusiUnik(f"{n} tidak muncul di struk mana pun, harganya tidak bisa dihitung.")
 
     try:
-        X = selesaikan_spl(jumlah, total)
-    except (np.linalg.LinAlgError, AssertionError):  # AssertionError: verifikasi solver gagal karena hampir singular
-        raise TidakAdaSolusiUnik(
-            "Struk kurang bervariasi: ada struk yang perbandingan jumlahnya sama dengan struk lain. "
-            "Tambah struk dengan kombinasi berbeda."
-        ) from None
+        X = selesaikan_spl(A, total)
+    # AssertionError: cek A @ X == B di solver gagal saat matriks hampir singular
+    except (np.linalg.LinAlgError, AssertionError):
+        raise TidakAdaSolusiUnik("Struk kurang bervariasi. Tambah struk dengan kombinasi jumlah berbeda.") from None
 
-    harga = {n: float(x) for n, x in zip(nama, X)}
-    total_hitung_ulang = [float(v) for v in np.asarray(jumlah, dtype=float) @ X]
-    return HasilHarga(harga, total_hitung_ulang, _buat_peringatan(harga))
+    harga = dict(zip(nama, X.tolist()))
+    return HasilHarga(harga, (A @ X).tolist(), _buat_peringatan(harga))
