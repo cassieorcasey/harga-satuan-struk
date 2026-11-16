@@ -18,7 +18,7 @@ a2·x + b2·y + c2·z = T2
 a3·x + b3·y + c3·z = T3
 ```
 
-`a, b, c` = jumlah barang, `T` = total struk, `x, y, z` = harga satuan. Bentuk matriks: `A·X = B`, diselesaikan dengan solver dari [linear-algebra-from-scratch](https://github.com/cassieorcasey/linear-algebra-from-scratch).
+`a, b, c` = jumlah barang, `T` = total struk, `x, y, z` = harga satuan. Bentuk matriks: `A·X = B`, diselesaikan dengan solver dari [three-variable-linear-system](https://github.com/cassieorcasey/three-variable-linear-system).
 
 ### Contoh
 
@@ -97,7 +97,7 @@ a2·x + b2·y + c2·z = T2
 a3·x + b3·y + c3·z = T3
 ```
 
-`a, b, c` = item quantities, `T` = receipt total, `x, y, z` = unit prices. In matrix form `A·X = B`, solved with the solver from [linear-algebra-from-scratch](https://github.com/cassieorcasey/linear-algebra-from-scratch).
+`a, b, c` = item quantities, `T` = receipt total, `x, y, z` = unit prices. In matrix form `A·X = B`, solved with the solver from [three-variable-linear-system](https://github.com/cassieorcasey/three-variable-linear-system).
 
 ### Example
 
