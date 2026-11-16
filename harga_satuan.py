@@ -23,6 +23,28 @@ class HasilHarga:
     peringatan: list[str]
 
 
+def format_rupiah(nilai: float) -> str:
+    """20000.0 -> 'Rp20.000'; dibulatkan ke rupiah terdekat."""
+    n = round(nilai)
+    tanda = "-" if n < 0 else ""
+    return f"{tanda}Rp{abs(n):,}".replace(",", ".")
+
+
+def _buat_peringatan(harga: dict[str, float]) -> list[str]:
+    peringatan = []
+    for n, h in harga.items():
+        if h < 0:
+            peringatan.append(f"Harga {n} negatif ({format_rupiah(h)}): tidak masuk akal, periksa salah ketik.")
+        elif h < 100:
+            peringatan.append(f"Harga {n} sangat kecil ({format_rupiah(h)}): periksa lagi datanya.")
+    if any(abs(h - round(h / 100) * 100) > 0.5 for h in harga.values()):
+        peringatan.append(
+            "Ada harga yang bukan kelipatan Rp100: mungkin ada diskon atau pajak "
+            "yang belum dimasukkan, jadi hasil bisa terdistorsi."
+        )
+    return peringatan
+
+
 def _angka(nilai) -> bool:
     return isinstance(nilai, numbers.Real) and not isinstance(nilai, bool) and math.isfinite(nilai)
 
@@ -64,4 +86,4 @@ def hitung_harga_satuan(jumlah, total, nama=("x", "y", "z")) -> HasilHarga:
 
     harga = {n: float(x) for n, x in zip(nama, X)}
     total_hitung_ulang = [float(v) for v in np.asarray(jumlah, dtype=float) @ X]
-    return HasilHarga(harga, total_hitung_ulang, [])
+    return HasilHarga(harga, total_hitung_ulang, _buat_peringatan(harga))

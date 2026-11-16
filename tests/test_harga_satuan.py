@@ -68,3 +68,43 @@ def test_input_array_numpy_diterima():
     import numpy as np
     h = hitung_harga_satuan(np.array(JUMLAH), np.array(TOTAL), NAMA)
     assert h.harga == pytest.approx({"Kopi": 20000, "Roti": 5000, "Susu": 10000})
+
+
+from harga_satuan import format_rupiah  # noqa: E402
+
+
+@pytest.mark.parametrize("n, s", [
+    (20000.0, "Rp20.000"),
+    (19999.9999999, "Rp20.000"),
+    (1234567.4, "Rp1.234.567"),
+    (0, "Rp0"),
+    (-1500, "-Rp1.500"),
+    (999.5, "Rp1.000"),
+])
+def test_format_rupiah(n, s):
+    assert format_rupiah(n) == s
+
+
+def test_harga_negatif_diperingatkan():
+    # total struk 2 salah ketik (6000 seharusnya 60000)
+    h = hitung_harga_satuan(JUMLAH, [55000, 6000, 85000], NAMA)
+    assert any("negatif" in p for p in h.peringatan)
+
+
+def test_harga_sangat_kecil_diperingatkan():
+    # Susu = 50
+    h = hitung_harga_satuan(JUMLAH, [45050, 30150, 65100], NAMA)
+    assert any("Susu" in p and "kecil" in p for p in h.peringatan)
+
+
+def test_bukan_kelipatan_100_diperingatkan():
+    # total kena pajak 11%
+    h = hitung_harga_satuan(JUMLAH, [61050, 66600, 94350], NAMA)
+    assert any("diskon" in p or "pajak" in p for p in h.peringatan)
+
+
+def test_galat_float_tidak_memicu_peringatan():
+    jumlah = [[0.1, 0.2, 0.3], [1, 2, 3.5], [3, 1, 2]]
+    total = [0.1 * 20000 + 0.2 * 5000 + 0.3 * 10000, 65000, 85000]
+    h = hitung_harga_satuan(jumlah, total, NAMA)
+    assert h.peringatan == []
