@@ -1,122 +1,25 @@
-# Pencari Harga Satuan dari Struk (SPLTV) / Receipt Unit Price Finder
+# Receipt Unit Price Finder
 
-[id](#id) | [en](#en)
+Receipts often show only totals. Given 3 receipts with the same 3 items in different quantities, this tool works out the unit price of each item.
 
----
-
-## id
-
-Menghitung harga satuan 3 barang dari 3 struk belanja yang berisi barang sama dengan jumlah berbeda.
-
-### Model
-
-Tiap struk menjadi satu persamaan:
-
-```
-a1·x + b1·y + c1·z = T1
-a2·x + b2·y + c2·z = T2
-a3·x + b3·y + c3·z = T3
-```
-
-`a, b, c` = jumlah barang, `T` = total struk, `x, y, z` = harga satuan. Bentuk matriks: `A·X = B`, diselesaikan dengan solver dari [three-variable-linear-system](https://github.com/cassieorcasey/three-variable-linear-system).
-
-### Contoh
-
-| Struk | Kopi | Roti | Susu | Total |
-|---|---|---|---|---|
-| 1 | 2 | 1 | 1 | 55.000 |
-| 2 | 1 | 2 | 3 | 60.000 |
-| 3 | 3 | 1 | 2 | 85.000 |
-
-Hasil: Kopi Rp20.000, Roti Rp5.000, Susu Rp10.000.
-
-### Pakai
-
-```bash
-pip install -r requirements.txt
-python cli.py
-```
-
-Total bisa ditulis `55000`, `55.000`, atau `Rp 55.000`. Jumlah boleh desimal (`0,5`).
-
-Dari kode:
-
-```python
-from harga_satuan import format_rupiah, hitung_harga_satuan
-
-hasil = hitung_harga_satuan(
-    [[2, 1, 1], [1, 2, 3], [3, 1, 2]],
-    [55000, 60000, 85000],
-    ("Kopi", "Roti", "Susu"),
-)
-{n: format_rupiah(h) for n, h in hasil.harga.items()}
-# {'Kopi': 'Rp20.000', 'Roti': 'Rp5.000', 'Susu': 'Rp10.000'}
-hasil.peringatan  # []
-```
-
-### Kasus khusus
-
-| Kasus | Hasil |
-|---|---|
-| Struk identik, berkelipatan, atau hampir berkelipatan | `TidakAdaSolusiUnik` |
-| Barang tidak muncul di struk mana pun | `TidakAdaSolusiUnik`, menyebut nama barang |
-| Jumlah negatif / bukan angka, total ≤ 0, nama kosong atau kembar | `InputTidakValid` |
-| Harga negatif atau di bawah Rp100 | Peringatan |
-| Harga bukan kelipatan Rp100 | Peringatan: mungkin ada diskon atau pajak |
-
-### Belum didukung
-
-OCR foto struk, lebih dari 3 barang, diskon/pajak per barang.
-
-### Struktur dan tes
-
-```
-harga_satuan.py   fungsi inti
-cli.py            antarmuka terminal
-linear_solver.py  salinan solver SPLTV
-tests/            pytest
-```
-
-```bash
-pytest -q
-```
-
----
-
-## en
-
-Finds the unit prices of 3 items from 3 receipts that contain the same items in different quantities.
-
-### Model
-
-Each receipt becomes one equation:
-
-```
-a1·x + b1·y + c1·z = T1
-a2·x + b2·y + c2·z = T2
-a3·x + b3·y + c3·z = T3
-```
-
-`a, b, c` = item quantities, `T` = receipt total, `x, y, z` = unit prices. In matrix form `A·X = B`, solved with the solver from [three-variable-linear-system](https://github.com/cassieorcasey/three-variable-linear-system).
-
-### Example
+## Example
 
 | Receipt | Coffee | Bread | Milk | Total |
 |---|---|---|---|---|
-| 1 | 2 | 1 | 1 | 55,000 |
-| 2 | 1 | 2 | 3 | 60,000 |
-| 3 | 3 | 1 | 2 | 85,000 |
+| 1 | 2 | 1 | 1 | Rp55,000 |
+| 2 | 1 | 2 | 3 | Rp60,000 |
+| 3 | 3 | 1 | 2 | Rp85,000 |
 
 Result: Coffee Rp20,000, Bread Rp5,000, Milk Rp10,000.
 
-### Usage
+## Run
 
 ```bash
 pip install -r requirements.txt
 python cli.py
 ```
 
-The CLI is in Indonesian. Totals use Indonesian notation: `55000`, `55.000`, or `Rp 55.000` (a period separates thousands). Quantities may be decimal, written with a comma (`0,5`).
+The interface is in Indonesian. Totals use Indonesian notation (`55000`, `55.000` or `Rp 55.000`) and decimal quantities take a comma (`0,5`).
 
 From code:
 
@@ -133,31 +36,34 @@ result = hitung_harga_satuan(
 result.peringatan  # warnings, [] here
 ```
 
-`result.harga` holds the prices, `result.total_hitung_ulang` the recomputed totals, `result.peringatan` the warnings.
+`harga` holds the prices, `total_hitung_ulang` the recomputed totals and `peringatan` the warnings.
 
-### Edge cases
+## How it works
+
+Each receipt is one equation, `a·x + b·y + c·z = T`, where a, b, c are quantities, T is the total and x, y, z are unit prices. The 3×3 system is solved by a small NumPy solver in `linear_solver.py`.
+
+## Design decisions
+
+- **Rank check before solving.** Receipts that repeat the same information have no unique answer, so they are rejected with an explanation.
+- **Warnings instead of silent answers.** A negative price, a price below Rp100 or one that is not a multiple of Rp100 usually means a typo, a discount or tax.
 
 | Case | Result |
 |---|---|
-| Identical, proportional, or nearly proportional receipts | `TidakAdaSolusiUnik` (no unique solution) |
+| Identical or proportional receipts | `TidakAdaSolusiUnik` (no unique solution) |
 | An item missing from every receipt | `TidakAdaSolusiUnik`, naming the item |
 | Negative or non-numeric quantity, total ≤ 0, empty or duplicate name | `InputTidakValid` (invalid input) |
-| Negative price or below Rp100 | Warning |
-| Price not a multiple of Rp100 | Warning: possibly a discount or tax |
 
-### Not supported
+## Limitations
 
-Reading receipt photos (OCR), more than 3 items, per-item discounts or taxes.
+- Receipts that are nearly, but not exactly, proportional can still be solved and give implausible prices. Check the warnings.
+- Exactly 3 items and 3 receipts. No receipt photo reading, and no per-item discounts or taxes.
 
-### Structure and tests
-
-```
-harga_satuan.py   core function
-cli.py            terminal interface
-linear_solver.py  copy of the linear system solver
-tests/            pytest
-```
+## Tests
 
 ```bash
 pytest -q
 ```
+
+## License
+
+[MIT](LICENSE)

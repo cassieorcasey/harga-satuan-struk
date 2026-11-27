@@ -1,5 +1,4 @@
-# Disalin dari cassieorcasey/linear-algebra-from-scratch, linear-solver.py.
-# Bisa diganti dengan solver eliminasi Gauss (ide 4) selama tanda tangannya sama.
+# Salinan linear-solver.py: solver SPLTV berbasis np.linalg.solve.
 import numpy as np
 
 
